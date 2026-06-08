@@ -54,7 +54,7 @@ window.onload = async function () {
 
 //obtain file containing information about parameters (definitions)
 async function getParamDefinitions() {
-  const response = await fetch(`static/data/param_definitions.json`);
+  const response = await fetch(`static/data/param_definitions.json?v=${Date.now()}`);
   if (response.status !== 200 && response.status !== 201) {
     //alert error in alert box
     errorAlert("Unable to obtain definitions file");

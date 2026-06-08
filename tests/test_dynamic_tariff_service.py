@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 import pandas as pd
 import pytest
@@ -23,10 +24,14 @@ class LengthMismatchProvider(FakeProvider):
 
 
 @pytest.fixture(autouse=True)
-def _reset_fake_provider(monkeypatch):
+def _reset_fake_provider(monkeypatch, caplog):
     FakeProvider.calls = 0
     # Register a fake dynamic method that maps to the fake provider source.
     monkeypatch.setitem(dynamic_service.DYNAMIC_TARIFF_METHODS, "faketariff", "fake")
+    # Force the emhass logger to emit records so caplog can capture them. Other
+    # test modules (e.g. test_web_server) set the "emhass" logger to CRITICAL at
+    # import time, which would otherwise suppress the service's error logs.
+    caplog.set_level(logging.DEBUG, logger="emhass")
 
 
 def _params(load=None, prod=None):

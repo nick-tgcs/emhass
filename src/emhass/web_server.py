@@ -224,7 +224,9 @@ async def index():
         injection_dict = {}
 
     template = templates.get_template("index.html")
-    return await make_response(template.render(injection_dict=injection_dict))
+    return await make_response(
+        template.render(injection_dict=injection_dict, emhass_version=last_run.emhass_version())
+    )
 
 
 @app.route("/configuration", methods=["GET", "POST"])
@@ -296,7 +298,9 @@ async def configuration():
         params = {}
 
     template = templates.get_template("configuration.html")
-    return await make_response(template.render(config=params))
+    return await make_response(
+        template.render(config=params, emhass_version=last_run.emhass_version())
+    )
 
 
 @app.route("/template", methods=["GET"])

@@ -8,6 +8,7 @@ import pathlib
 import pickle
 import re
 import unittest
+from unittest.mock import patch
 
 import aiofiles
 import numpy as np
@@ -75,9 +76,12 @@ class TestForecast(unittest.IsolatedAsyncioTestCase):
             filename_path = emhass_conf["data_path"] / "test_df_final.pkl"
             async with aiofiles.open(filename_path, "rb") as inp:
                 content = await inp.read()
-                self.rh.df_final, self.days_list, self.var_list, self.rh.ha_config = pickle.loads(
-                    content
-                )
+                (
+                    self.rh.df_final,
+                    self.days_list,
+                    self.var_list,
+                    self.rh.ha_config,
+                ) = utils.safe_pickle_loads(content)
                 self.rh.var_list = self.var_list
             self.retrieve_hass_conf["sensor_power_load_no_var_loads"] = str(self.var_list[0])
             self.retrieve_hass_conf["sensor_power_photovoltaics"] = str(self.var_list[1])
@@ -198,7 +202,7 @@ class TestForecast(unittest.IsolatedAsyncioTestCase):
         data_path = emhass_conf["data_path"] / str(model_type + ".pkl")
         async with aiofiles.open(data_path, "rb") as inp:
             content = await inp.read()
-            data, _, _, _ = pickle.loads(content)
+            data, _, _, _ = utils.safe_pickle_loads(content)
         # Clean nan's
         data = data.interpolate(method="linear", axis=0, limit=5)
         data = data.fillna(0.0)
@@ -369,7 +373,10 @@ class TestForecast(unittest.IsolatedAsyncioTestCase):
 
         get_url = "https://api.solcast.com.au/rooftop_sites/123456/forecasts?hours=24"
 
-        with aioresponses() as mocked:
+        with (
+            patch.object(self.fcst, "_solcast_rate_limit_ok", return_value=True),
+            aioresponses() as mocked,
+        ):
             mocked.get(get_url, payload=data)
 
             df_weather_scrap = await self.fcst.get_weather_forecast(method="solcast")
@@ -418,7 +425,10 @@ class TestForecast(unittest.IsolatedAsyncioTestCase):
         data = bz2.decompress(compressed)
         data = cPickle.loads(data)
         data = orjson.loads(data.content)
-        with aioresponses() as mocked:
+        with (
+            patch.object(self.fcst, "_solcast_rate_limit_ok", return_value=True),
+            aioresponses() as mocked,
+        ):
             for roof_id in roof_ids:
                 get_url = f"https://api.solcast.com.au/rooftop_sites/{roof_id}/forecasts?hours=24"
                 mocked.get(get_url, payload=data)
@@ -482,7 +492,10 @@ class TestForecast(unittest.IsolatedAsyncioTestCase):
         days_solcast = int(len(self.fcst.forecast_dates) * self.fcst.freq.seconds / 3600)
         get_url = f"https://api.solcast.com.au/rooftop_sites/123456/forecasts?hours={days_solcast}"
 
-        with aioresponses() as mocked:
+        with (
+            patch.object(self.fcst, "_solcast_rate_limit_ok", return_value=True),
+            aioresponses() as mocked,
+        ):
             mocked.get(get_url, payload=data)
             df_weather_scrap = await self.fcst.get_weather_forecast(method="solcast")
 
@@ -771,7 +784,7 @@ class TestForecast(unittest.IsolatedAsyncioTestCase):
             data_path = emhass_conf["data_path"] / "test_df_final.pkl"
             async with aiofiles.open(data_path, "rb") as inp:
                 content = await inp.read()
-                rh.df_final, days_list, var_list, rh.ha_config = pickle.loads(content)
+                rh.df_final, days_list, var_list, rh.ha_config = utils.safe_pickle_loads(content)
                 rh.var_list = var_list
             retrieve_hass_conf["sensor_power_load_no_var_loads"] = str(self.var_list[0])
             retrieve_hass_conf["sensor_power_photovoltaics"] = str(self.var_list[1])
@@ -1116,7 +1129,7 @@ class TestForecast(unittest.IsolatedAsyncioTestCase):
             data_path = emhass_conf["data_path"] / "test_df_final.pkl"
             async with aiofiles.open(data_path, "rb") as inp:
                 content = await inp.read()
-                rh.df_final, days_list, var_list, rh.ha_config = pickle.loads(content)
+                rh.df_final, days_list, var_list, rh.ha_config = utils.safe_pickle_loads(content)
                 rh.var_list = var_list
             retrieve_hass_conf["sensor_power_load_no_var_loads"] = str(self.var_list[0])
             retrieve_hass_conf["sensor_power_photovoltaics"] = str(self.var_list[1])

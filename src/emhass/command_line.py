@@ -19,6 +19,7 @@ import orjson
 import pandas as pd
 
 from emhass import last_run, utils
+from emhass.dynamic_tariffs.service import prepare_dynamic_tariffs
 from emhass.forecast import Forecast
 from emhass.machine_learning_forecaster import MLForecaster
 from emhass.machine_learning_regressor import MLRegressor
@@ -475,7 +476,7 @@ async def _retrieve_from_file(
     """Helper to retrieve data from a pickle file and configure variables."""
     async with aiofiles.open(emhass_conf["data_path"] / test_df_literal, "rb") as inp:
         content = await inp.read()
-        rh.df_final, days_list, var_list, rh.ha_config = pickle.loads(content)
+        rh.df_final, days_list, var_list, rh.ha_config = utils.safe_pickle_loads(content)
         rh.var_list = var_list
     # Assign variables based on set_type
     retrieve_hass_conf["sensor_power_load_no_var_loads"] = str(var_list[0])
@@ -721,7 +722,7 @@ async def adjust_pv_forecast(
         try:
             async with aiofiles.open(model_path, "rb") as inp:
                 content = await inp.read()
-                fcst.model_adjust_pv = pickle.loads(content)
+                fcst.model_adjust_pv = utils.safe_pickle_loads(content)
         except (pickle.UnpicklingError, EOFError, AttributeError, ImportError) as e:
             logger.error(f"Failed to load existing adjusted PV model: {type(e).__name__}: {str(e)}")
             logger.warning(
@@ -982,7 +983,7 @@ async def _prepare_ml_fit_predict(ctx: SetupContext):
         filename_path = ctx.emhass_conf["data_path"] / filename
         async with aiofiles.open(filename_path, "rb") as inp:
             content = await inp.read()
-            df_input_data, _, _, _ = pickle.loads(content)
+            df_input_data, _, _, _ = utils.safe_pickle_loads(content)
         df_input_data = df_input_data[df_input_data.index[-1] - pd.offsets.Day(days_to_retrieve) :]
         return {"df_input_data": df_input_data}
     else:
@@ -1109,7 +1110,7 @@ async def set_input_data_dict(
     if get_data_from_file:
         async with aiofiles.open(emhass_conf["data_path"] / test_df_literal, "rb") as inp:
             content = await inp.read()
-            _, _, _, rh.ha_config = pickle.loads(content)
+            _, _, _, rh.ha_config = utils.safe_pickle_loads(content)
     elif not await rh.get_ha_config():
         return False
     if isinstance(params, dict):
@@ -1150,6 +1151,14 @@ async def set_input_data_dict(
             opt = None
             logger.debug(f"Skipping OptimizationCache for action: {set_type}")
         else:
+            if not await prepare_dynamic_tariffs(
+                params=params,
+                retrieve_hass_conf=retrieve_hass_conf,
+                optim_conf=optim_conf,
+                forecast_dates=fcst.forecast_dates,
+                logger=logger,
+            ):
+                return False
             # Try to get cached Optimization object for warm-starting
             _num_ts = len(fcst.forecast_dates)
             opt = OptimizationCache.get(
@@ -1796,7 +1805,7 @@ async def forecast_model_predict(
         if filename_path.is_file():
             async with aiofiles.open(filename_path, "rb") as inp:
                 content = await inp.read()
-                mlf = pickle.loads(content)
+                mlf = utils.safe_pickle_loads(content)
                 logger.debug("loaded saved model from " + str(filename_path))
         else:
             logger.error(
@@ -1879,7 +1888,7 @@ async def forecast_model_tune(
         if filename_path.is_file():
             async with aiofiles.open(filename_path, "rb") as inp:
                 content = await inp.read()
-                mlf = pickle.loads(content)
+                mlf = utils.safe_pickle_loads(content)
                 logger.debug("loaded saved model from " + str(filename_path))
         else:
             logger.error(
@@ -1991,7 +2000,7 @@ async def regressor_model_predict(
         if filename_path.is_file():
             async with aiofiles.open(filename_path, "rb") as inp:
                 content = await inp.read()
-                mlr = pickle.loads(content)
+                mlr = utils.safe_pickle_loads(content)
         else:
             logger.error(
                 "The ML forecaster file was not found, please run a model fit method before this predict method",

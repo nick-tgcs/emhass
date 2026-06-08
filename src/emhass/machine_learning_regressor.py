@@ -54,11 +54,11 @@ REGRESSION_METHODS = {
         "param_grid": {"ridge__alpha": [1e-4, 1e-3, 1e-2, 1e-1, 1, 10, 100]},
     },
     "LassoRegression": {
-        "model": Lasso(random_state=seed),
-        "param_grid": {"lasso__alpha": [1e-4, 1e-3, 1e-2, 1e-1, 1, 10, 100]},
+        "model": Lasso(random_state=seed, max_iter=10000),
+        "param_grid": {"lasso__alpha": [1e-1, 1, 10, 100]},
     },
     "ElasticNet": {
-        "model": ElasticNet(alpha=1.0, l1_ratio=0.5, random_state=seed),
+        "model": ElasticNet(alpha=1.0, l1_ratio=0.5, random_state=seed, max_iter=10000),
         "param_grid": {
             "elasticnet__alpha": [1e-4, 1e-3, 1e-2, 1e-1, 1, 10, 100],
             "elasticnet__l1_ratio": [0.1, 0.5, 0.7, 0.9, 0.95, 0.99, 1],

@@ -153,8 +153,8 @@ class MLForecaster:
         models = {
             "LinearRegression": LinearRegression(),
             "RidgeRegression": Ridge(),
-            "LassoRegression": Lasso(random_state=seed),
-            "ElasticNet": ElasticNet(alpha=1.0, l1_ratio=0.5, random_state=seed),
+            "LassoRegression": Lasso(random_state=seed, max_iter=10000),
+            "ElasticNet": ElasticNet(alpha=1.0, l1_ratio=0.5, random_state=seed, max_iter=10000),
             "KNeighborsRegressor": KNeighborsRegressor(),
             "DecisionTreeRegressor": DecisionTreeRegressor(ccp_alpha=0.0, random_state=seed),
             "SVR": SVR(),

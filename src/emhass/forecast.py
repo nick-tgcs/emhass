@@ -25,6 +25,7 @@ import pickle
 import pickle as cPickle
 import re
 import tempfile
+import warnings
 from datetime import datetime, timedelta
 from urllib.parse import quote
 
@@ -45,7 +46,7 @@ from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
 from emhass.machine_learning_forecaster import MLForecaster
 from emhass.machine_learning_regressor import MLRegressor
 from emhass.retrieve_hass import RetrieveHass
-from emhass.utils import add_date_features, get_days_list, set_df_index_freq
+from emhass.utils import add_date_features, get_days_list, safe_pickle_loads, set_df_index_freq
 
 header_accept = "application/json"
 error_msg_list_not_long_enough = "Passed data from passed list is not long enough"
@@ -710,7 +711,13 @@ class Forecast:
         cloud_cover_unit = copy.deepcopy(cloud_cover) / 100.0
         ghi = (offset + (1 - offset) * (1 - cloud_cover_unit)) * cs["ghi"]
         # Using disc model
-        dni = disc(ghi, solpos["zenith"], cloud_cover.index)["dni"]
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message="invalid value encountered in divide",
+                category=RuntimeWarning,
+            )
+            dni = disc(ghi, solpos["zenith"], cloud_cover.index)["dni"]
         dhi = ghi - dni * np.cos(np.radians(solpos["zenith"]))
         irrads = pd.DataFrame({"ghi": ghi, "dni": dni, "dhi": dhi}).fillna(0)
         return irrads
@@ -840,7 +847,13 @@ class Forecast:
                 strings_per_inverter=str_per_inv,
             )
             mc = ModelChain(system, location, aoi_model="physical")
-            mc.run_model(df_weather)
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    message="invalid value encountered in divide",
+                    category=RuntimeWarning,
+                )
+                mc.run_model(df_weather)
             return mc.results.ac
 
         # Handle list (mixed orientation) vs single configuration
@@ -1389,7 +1402,7 @@ class Forecast:
             filename_path = self.emhass_conf["data_path"] / "test_df_final.pkl"
             async with aiofiles.open(filename_path, "rb") as inp:
                 content = await inp.read()
-                rh.df_final, days_list, var_list, rh.ha_config = pickle.loads(content)
+                rh.df_final, days_list, var_list, rh.ha_config = safe_pickle_loads(content)
                 self.var_load = var_list[0]
                 self.retrieve_hass_conf["sensor_power_load_no_var_loads"] = self.var_load
                 var_interp = [var_list[0]]
@@ -1443,7 +1456,7 @@ class Forecast:
         data_path = self.emhass_conf["data_path"] / str(model_type + ".pkl")
         async with aiofiles.open(data_path, "rb") as fid:
             content = await fid.read()
-            data, _, _, _ = pickle.loads(content)
+            data, _, _, _ = safe_pickle_loads(content)
         # Handle Stale Headers in PKL file
         if self.var_load not in data.columns:
             self.logger.warning(f"Variable {self.var_load} not found in {model_type}.pkl")
@@ -1518,7 +1531,7 @@ class Forecast:
             if filename_path.is_file():
                 async with aiofiles.open(filename_path, "rb") as inp:
                     content = await inp.read()
-                    mlf = pickle.loads(content)
+                    mlf = safe_pickle_loads(content)
             else:
                 self.logger.error(
                     "The ML forecaster file was not found, please run a model fit method before this predict method"
@@ -1848,7 +1861,7 @@ class Forecast:
         # cannot be unlinked while a handle is still open (PermissionError WinError 32).
         async with aiofiles.open(w_forecast_cache_path, "rb") as file:
             content = await file.read()
-        data = pickle.loads(content)
+        data = safe_pickle_loads(content)
         if not isinstance(data, pd.DataFrame) or data.empty:
             self.logger.error("Cache file is corrupt or empty.")
             self.logger.error(

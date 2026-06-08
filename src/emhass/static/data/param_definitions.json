@@ -353,6 +353,119 @@
       "requires": {
         "production_price_forecast_method": "constant"
       }
+    },
+    "dynamic_tariff_source": {
+      "friendly_name": "Dynamic tariff source",
+      "Description": "Optional provider for full-horizon dynamic import and export tariff forecasts.",
+      "input": "select",
+      "select_options": [
+        "none",
+        "home_assistant_forecast_entities",
+        "home_assistant_amber_sensors",
+        "home_assistant_amber_service"
+      ],
+      "default_value": "none",
+      "unit": "none"
+    },
+    "dynamic_tariff_import_forecast_entity": {
+      "friendly_name": "Dynamic import tariff entity",
+      "Description": "Home Assistant forecast entity containing import tariff intervals.",
+      "input": "string",
+      "default_value": "",
+      "unit": "none"
+    },
+    "dynamic_tariff_export_forecast_entity": {
+      "friendly_name": "Dynamic export tariff entity",
+      "Description": "Home Assistant forecast entity containing export tariff intervals.",
+      "input": "string",
+      "default_value": "",
+      "unit": "none"
+    },
+    "dynamic_tariff_forecast_attribute": {
+      "friendly_name": "Dynamic tariff forecast attribute",
+      "Description": "Entity attribute that contains tariff forecast interval rows.",
+      "input": "string",
+      "default_value": "forecasts",
+      "unit": "none"
+    },
+    "dynamic_tariff_start_key": {
+      "friendly_name": "Dynamic tariff start key",
+      "Description": "Forecast row key containing the interval start timestamp.",
+      "input": "string",
+      "default_value": "start_time",
+      "unit": "none"
+    },
+    "dynamic_tariff_end_key": {
+      "friendly_name": "Dynamic tariff end key",
+      "Description": "Forecast row key containing the interval end timestamp.",
+      "input": "string",
+      "default_value": "end_time",
+      "unit": "none"
+    },
+    "dynamic_tariff_duration_key": {
+      "friendly_name": "Dynamic tariff duration key",
+      "Description": "Forecast row key containing the interval duration.",
+      "input": "string",
+      "default_value": "duration",
+      "unit": "none"
+    },
+    "dynamic_tariff_import_price_key": {
+      "friendly_name": "Dynamic import tariff price key",
+      "Description": "Forecast row key containing the import price.",
+      "input": "string",
+      "default_value": "per_kwh",
+      "unit": "¤/kWh"
+    },
+    "dynamic_tariff_export_price_key": {
+      "friendly_name": "Dynamic export tariff price key",
+      "Description": "Forecast row key containing the export sell price.",
+      "input": "string",
+      "default_value": "per_kwh",
+      "unit": "¤/kWh"
+    },
+    "dynamic_tariff_time_boundary_strategy": {
+      "friendly_name": "Dynamic tariff time boundary strategy",
+      "Description": "How provider interval boundaries are interpreted.",
+      "input": "select",
+      "select_options": ["explicit_start_end", "end_minus_duration"],
+      "default_value": "explicit_start_end",
+      "unit": "none"
+    },
+    "dynamic_tariff_export_sign": {
+      "friendly_name": "Dynamic tariff export sign",
+      "Description": "How export prices from the provider should be signed.",
+      "input": "select",
+      "select_options": ["source_signed", "invert"],
+      "default_value": "source_signed",
+      "unit": "none"
+    },
+    "dynamic_tariff_strict_coverage": {
+      "friendly_name": "Dynamic tariff strict coverage",
+      "Description": "Require dynamic tariff providers to cover every optimization timestep.",
+      "input": "boolean",
+      "default_value": true,
+      "unit": "none"
+    },
+    "dynamic_tariff_amber_config_entry_id": {
+      "friendly_name": "Amber config entry ID",
+      "Description": "Optional Amber Home Assistant config entry ID for service forecasts.",
+      "input": "string",
+      "default_value": "",
+      "unit": "none"
+    },
+    "dynamic_tariff_import_channel_type": {
+      "friendly_name": "Dynamic import tariff channel",
+      "Description": "Provider channel type for import tariffs.",
+      "input": "string",
+      "default_value": "general",
+      "unit": "none"
+    },
+    "dynamic_tariff_export_channel_type": {
+      "friendly_name": "Dynamic export tariff channel",
+      "Description": "Provider channel type for export tariffs.",
+      "input": "string",
+      "default_value": "feed_in",
+      "unit": "none"
     }
   },
   "Solar System (PV)": {

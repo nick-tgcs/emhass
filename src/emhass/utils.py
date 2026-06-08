@@ -6,8 +6,10 @@ import csv
 import logging
 import os
 import pathlib
+import pickle
 import shutil
 import time
+import warnings
 from collections.abc import Sequence
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
@@ -29,6 +31,17 @@ pd.options.plotting.backend = "plotly"
 
 # Unit conversion constants
 W_TO_KW = 1000  # Watts to kilowatts conversion factor
+
+
+def safe_pickle_loads(content: bytes):
+    """Load legacy pickle data without leaking NumPy 2.x compatibility warnings."""
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message=r"numpy\.core\..* is deprecated and has been renamed to numpy\._core\..*",
+            category=DeprecationWarning,
+        )
+        return pickle.loads(content)
 
 
 def get_root(file: str, num_parent: int = 3) -> str:
@@ -1723,6 +1736,49 @@ async def treat_runtimeparams(
             except (ValueError, SyntaxError):
                 return False
 
+        def _coerce_number(value, default, cast):
+            if value is None:
+                return default
+            try:
+                return cast(value)
+            except (TypeError, ValueError):
+                return default
+
+        def _coerce_int(value):
+            return int(float(value))
+
+        def _coerce_per_load_list(name, fill, cast=float):
+            num_loads = int(params["optim_conf"].get("number_of_deferrable_loads", 0) or 0)
+            previous = params["optim_conf"].get(name)
+            defaults = previous if isinstance(previous, list) else [fill] * num_loads
+            value = params["optim_conf"].get(name)
+            if isinstance(value, str):
+                try:
+                    value = ast.literal_eval(value)
+                except (ValueError, SyntaxError):
+                    value = defaults
+            if not isinstance(value, list):
+                value = defaults
+            normalized = []
+            for index in range(num_loads):
+                default = defaults[index] if index < len(defaults) else fill
+                default = _coerce_number(default, fill, cast)
+                if default is None:
+                    default = fill
+                item = value[index] if index < len(value) else default
+                normalized.append(_coerce_number(item, default, cast))
+            params["optim_conf"][name] = normalized
+
+        def _coerce_runtime_deferrable_lists():
+            _coerce_per_load_list("nominal_power_of_deferrable_loads", 0.0, float)
+            _coerce_per_load_list("minimum_power_of_deferrable_loads", 0.0, float)
+            _coerce_per_load_list("operating_hours_of_each_deferrable_load", 0.0, float)
+            _coerce_per_load_list("set_deferrable_startup_penalty", 0.0, float)
+            _coerce_per_load_list("deferrable_load_max_cost", 0.0, float)
+            _coerce_per_load_list("set_deferrable_max_startups", 0, _coerce_int)
+            _coerce_per_load_list("start_timesteps_of_each_deferrable_load", 0, _coerce_int)
+            _coerce_per_load_list("end_timesteps_of_each_deferrable_load", 0, _coerce_int)
+
         def _get_ml_param(name, params, runtimeparams, default=None, cast=None):
             """
             Prioritize Runtime Params -> Config Params (optim_conf) -> Default.
@@ -1901,6 +1957,8 @@ async def treat_runtimeparams(
                 params["optim_conf"]["set_deferrable_load_single_constant"] = [
                     _cast_bool(sdlsc)
                 ] * n_loads
+
+        _coerce_runtime_deferrable_lists()
 
         # Treat retrieve data from Home Assistant (retrieve_hass_conf) configuration parameters passed at runtime
         # Secrets passed at runtime

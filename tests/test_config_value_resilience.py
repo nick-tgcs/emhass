@@ -65,51 +65,6 @@ def _optim_array_param_names() -> list[str]:
 
 _OPTIM_ARRAY_PARAMS: list[str] = _optim_array_param_names()
 
-# Params whose guard is already merged — tests MUST pass and act as regression
-# guards.  Add to this set when a new guard lands.
-_GUARDED: frozenset[str] = frozenset({"cost_forecast_per_deferrable_load"})
-
-# Params known to crash because no stringly-typed guard exists yet.
-# Key = param name, value = reason string for xfail (include issue ref).
-# When a guard lands, remove the entry; the test becomes a live regression guard.
-_XFAIL_REASON: dict[str, str] = {
-    "nominal_power_of_deferrable_loads": (
-        "no stringly-typed guard; crashes at CVXPY constraint build (see #900)"
-    ),
-    "minimum_power_of_deferrable_loads": (
-        "no stringly-typed guard; pad_list fails on non-list value (see #900)"
-    ),
-    "operating_hours_of_each_deferrable_load": (
-        "no stringly-typed guard; pad_list fails on non-list value (see #900)"
-    ),
-    "set_deferrable_startup_penalty": (
-        "no stringly-typed guard; string char used as float in penalty (see #900)"
-    ),
-    "deferrable_load_max_cost": (
-        "no stringly-typed guard; string char used as float in penalty (see #900)"
-    ),
-    "set_deferrable_max_startups": (
-        "no stringly-typed guard; string char used as int for max_starts (see #900)"
-    ),
-}
-
-# Per-param, per-bad-value overrides for the xfail marker.
-# Maps (param_name, value_id) — if present, this specific (param, value) combo
-# is NOT marked xfail even if param is in _XFAIL_REASON; a partial guard exists
-# that handles this specific bad-value shape.
-_XFAIL_EXCLUDE: frozenset[tuple[str, str]] = frozenset(
-    {
-        # start timesteps: validate_def_timewindow(0.5, 0) produces start>end →
-        # slice [def_start:def_end] is never reached.  None element handled by
-        # the [s if s is not None else 0] guard (opt.py:2868).
-        ("start_timesteps_of_each_deferrable_load", "none_element"),
-        # set_deferrable_max_startups: `if max_starts and max_starts > 0:` guard
-        # short-circuits on None (falsy) and 0.5 only appears as a CVXPY float
-        # bound which is valid.  No crash for the [None, 0.5] shape.
-        ("set_deferrable_max_startups", "none_element"),
-    }
-)
-
 # Bad values to inject; (id_suffix, value) pairs.
 _BAD_VALUES: list[tuple[str, object]] = [
     ("scalar_null", "null"),
@@ -117,26 +72,12 @@ _BAD_VALUES: list[tuple[str, object]] = [
     ("str_element", ["0.0", "0.0"]),
 ]
 
-# start/end timesteps crash with scalar_null and str_element (no guard there)
-_XFAIL_REASON["start_timesteps_of_each_deferrable_load"] = (
-    "no stringly-typed guard for scalar/string values; "
-    "None-element path is guarded but scalar-null/string-element crash (see #900)"
-)
-_XFAIL_REASON["end_timesteps_of_each_deferrable_load"] = (
-    "no stringly-typed guard for scalar/string values; "
-    "None-element path is guarded but scalar-null/string-element crash (see #900)"
-)
-
 
 def _make_cases() -> list:
     cases = []
     for param in _OPTIM_ARRAY_PARAMS:
-        reason = _XFAIL_REASON.get(param)
         for val_id, bad_val in _BAD_VALUES:
-            marks: list = []
-            if reason and (param, val_id) not in _XFAIL_EXCLUDE:
-                marks.append(pytest.mark.xfail(strict=True, reason=reason))
-            cases.append(pytest.param(param, bad_val, id=f"{param}-{val_id}", marks=marks))
+            cases.append(pytest.param(param, bad_val, id=f"{param}-{val_id}"))
     return cases
 
 

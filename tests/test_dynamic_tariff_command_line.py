@@ -31,7 +31,8 @@ def base_params():
     params["optim_conf"]["set_use_pv"] = False
     params["optim_conf"]["weather_forecast_method"] = "list"
     params["optim_conf"]["load_forecast_method"] = "list"
-    params["optim_conf"]["dynamic_tariff_source"] = "home_assistant_forecast_entities"
+    params["optim_conf"]["load_cost_forecast_method"] = "amber"
+    params["optim_conf"]["production_price_forecast_method"] = "amber"
     return params
 
 

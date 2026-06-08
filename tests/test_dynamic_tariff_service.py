@@ -23,16 +23,21 @@ class LengthMismatchProvider(FakeProvider):
 
 
 @pytest.fixture(autouse=True)
-def _reset_fake_provider():
+def _reset_fake_provider(monkeypatch):
     FakeProvider.calls = 0
+    # Register a fake dynamic method that maps to the fake provider source.
+    monkeypatch.setitem(dynamic_service.DYNAMIC_TARIFF_METHODS, "faketariff", "fake")
 
 
 def _params(load=None, prod=None):
     return {"passed_data": {"load_cost_forecast": load, "prod_price_forecast": prod}}
 
 
-def _optim_conf(source="fake"):
-    return {"dynamic_tariff_source": source}
+def _optim_conf(method="faketariff"):
+    return {
+        "load_cost_forecast_method": method,
+        "production_price_forecast_method": method,
+    }
 
 
 def _dates():
@@ -41,7 +46,10 @@ def _dates():
 
 def test_none_source_leaves_existing_methods_unchanged(monkeypatch):
     monkeypatch.setitem(dynamic_service.PROVIDERS, "fake", FakeProvider)
-    optim_conf = {"dynamic_tariff_source": "none", "load_cost_forecast_method": "hp_hc_periods"}
+    optim_conf = {
+        "load_cost_forecast_method": "hp_hc_periods",
+        "production_price_forecast_method": "constant",
+    }
 
     result = asyncio.run(
         prepare_dynamic_tariffs(
@@ -92,12 +100,14 @@ def test_one_sided_runtime_tariff_conflict_fails(caplog):
     assert "both load_cost_forecast and prod_price_forecast" in caplog.text
 
 
-def test_unknown_provider_fails(caplog):
+def test_unknown_provider_fails(monkeypatch, caplog):
+    # Map the fake method to a source name that is not registered in PROVIDERS.
+    monkeypatch.setitem(dynamic_service.DYNAMIC_TARIFF_METHODS, "faketariff", "missing")
     result = asyncio.run(
         prepare_dynamic_tariffs(
             params=_params(),
             retrieve_hass_conf={"hass_url": "http://ha", "long_lived_token": "token"},
-            optim_conf=_optim_conf("missing"),
+            optim_conf=_optim_conf(),
             forecast_dates=_dates(),
             logger=None,
         )
@@ -105,6 +115,27 @@ def test_unknown_provider_fails(caplog):
 
     assert result is False
     assert "Unknown dynamic tariff source" in caplog.text
+
+
+def test_mismatched_dynamic_methods_fail(monkeypatch, caplog):
+    monkeypatch.setitem(dynamic_service.PROVIDERS, "fake", FakeProvider)
+    optim_conf = {
+        "load_cost_forecast_method": "faketariff",
+        "production_price_forecast_method": "constant",
+    }
+    result = asyncio.run(
+        prepare_dynamic_tariffs(
+            params=_params(),
+            retrieve_hass_conf={"hass_url": "http://ha", "long_lived_token": "token"},
+            optim_conf=optim_conf,
+            forecast_dates=_dates(),
+            logger=None,
+        )
+    )
+
+    assert result is False
+    assert "same dynamic value" in caplog.text
+    assert FakeProvider.calls == 0
 
 
 def test_provider_pair_is_injected_as_list_methods(monkeypatch):
@@ -146,3 +177,24 @@ def test_provider_length_mismatch_fails(monkeypatch):
     assert result is False
     assert params["passed_data"]["load_cost_forecast"] is None
     assert params["passed_data"]["prod_price_forecast"] is None
+
+
+def test_every_dynamic_method_maps_to_a_registered_provider():
+    """The generic contract: each real user-facing dynamic method must resolve
+    to a registered provider, so a method can never dangle without a provider.
+    """
+    from emhass.dynamic_tariffs.providers import PROVIDERS as REGISTERED
+
+    for method in ("amber", "ha_entity"):
+        source_name = dynamic_service.DYNAMIC_TARIFF_METHODS[method]
+        assert source_name in REGISTERED, (
+            f"dynamic method {method!r} maps to unregistered provider {source_name!r}"
+        )
+
+
+def test_generic_ha_entity_method_is_exposed():
+    """A non-Amber user must be able to reach the provider-neutral entity provider."""
+    assert dynamic_service.DYNAMIC_TARIFF_METHODS.get("ha_entity") == (
+        "home_assistant_forecast_entities"
+    )
+

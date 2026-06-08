@@ -319,135 +319,28 @@
     }
   },
   "Tariff": {
-    "dynamic_tariff_source": {
-      "friendly_name": "Tariff source",
-      "Description": "Choose 'none' to configure static peak/off-peak tariffs below. Choose any other option to pull full-horizon import and export prices automatically from Home Assistant \u2014 the static fields below are then unused.",
-      "input": "select",
-      "select_options": [
-        "none",
-        "home_assistant_forecast_entities",
-        "home_assistant_amber_sensors",
-        "home_assistant_amber_service"
-      ],
-      "default_value": "none",
-      "unit": "none"
-    },
-    "dynamic_tariff_import_forecast_entity": {
-      "friendly_name": "Import tariff entity",
-      "Description": "Home Assistant forecast sensor whose attribute contains per-interval import prices (e.g. sensor.beckton_general_forecast).",
-      "input": "string",
-      "default_value": "",
-      "unit": "none"
-    },
-    "dynamic_tariff_export_forecast_entity": {
-      "friendly_name": "Export tariff entity",
-      "Description": "Home Assistant forecast sensor whose attribute contains per-interval export prices (e.g. sensor.beckton_feed_in_forecast).",
-      "input": "string",
-      "default_value": "",
-      "unit": "none"
-    },
-    "dynamic_tariff_forecast_attribute": {
-      "friendly_name": "Forecast attribute name",
-      "Description": "Sensor attribute holding the list of interval rows. Default: 'forecasts'.",
-      "input": "string",
-      "default_value": "forecasts",
-      "unit": "none"
-    },
-    "dynamic_tariff_start_key": {
-      "friendly_name": "Interval start key",
-      "Description": "Row field name for the interval start timestamp.",
-      "input": "string",
-      "default_value": "start_time",
-      "unit": "none"
-    },
-    "dynamic_tariff_end_key": {
-      "friendly_name": "Interval end key",
-      "Description": "Row field name for the interval end timestamp.",
-      "input": "string",
-      "default_value": "end_time",
-      "unit": "none"
-    },
-    "dynamic_tariff_duration_key": {
-      "friendly_name": "Interval duration key",
-      "Description": "Row field name for the interval duration in minutes.",
-      "input": "string",
-      "default_value": "duration",
-      "unit": "none"
-    },
-    "dynamic_tariff_import_price_key": {
-      "friendly_name": "Import price key",
-      "Description": "Row field name containing the import price per kWh.",
-      "input": "string",
-      "default_value": "per_kwh",
-      "unit": "\u00a4/kWh"
-    },
-    "dynamic_tariff_export_price_key": {
-      "friendly_name": "Export price key",
-      "Description": "Row field name containing the export sell price per kWh.",
-      "input": "string",
-      "default_value": "per_kwh",
-      "unit": "\u00a4/kWh"
-    },
-    "dynamic_tariff_time_boundary_strategy": {
-      "friendly_name": "Interval boundary strategy",
-      "Description": "'explicit_start_end': use start and end keys directly. 'end_minus_duration': compute start as end minus duration (required for Amber).",
-      "input": "select",
-      "select_options": [
-        "explicit_start_end",
-        "end_minus_duration"
-      ],
-      "default_value": "explicit_start_end",
-      "unit": "none"
-    },
-    "dynamic_tariff_export_sign": {
-      "friendly_name": "Export price sign",
-      "Description": "'source_signed': use the provider value as-is (correct for Amber). 'invert': multiply by -1 if your provider returns positive export prices.",
-      "input": "select",
-      "select_options": [
-        "source_signed",
-        "invert"
-      ],
-      "default_value": "source_signed",
-      "unit": "none"
-    },
-    "dynamic_tariff_strict_coverage": {
-      "friendly_name": "Strict coverage",
-      "Description": "Block optimization if the provider does not cover every forecast timestep. Recommended: enabled.",
-      "input": "boolean",
-      "default_value": true,
-      "unit": "none"
-    },
-    "dynamic_tariff_amber_config_entry_id": {
-      "friendly_name": "Amber config entry ID",
-      "Description": "Only needed for 'home_assistant_amber_service' when you have multiple Amber integrations. Leave blank for single-account setups.",
-      "input": "string",
-      "default_value": "",
-      "unit": "none"
-    },
-    "dynamic_tariff_import_channel_type": {
-      "friendly_name": "Import channel type",
-      "Description": "Amber channel type for import prices. Default: 'general'.",
-      "input": "string",
-      "default_value": "general",
-      "unit": "none"
-    },
-    "dynamic_tariff_export_channel_type": {
-      "friendly_name": "Export channel type",
-      "Description": "Amber channel type for export prices. Default: 'feed_in'.",
-      "input": "string",
-      "default_value": "feed_in",
-      "unit": "none"
-    },
     "load_cost_forecast_method": {
       "friendly_name": "Load cost method",
-      "Description": "Define the method that will be used for load cost forecast. The options are \u2018hp_hc_periods\u2019 for peak and non-peak hours contracts, and \u2018csv\u2019 to load custom cost from CSV file.",
+      "Description": "Method used for load cost (import price) forecast. 'hp_hc_periods' for fixed peak/off-peak contracts, 'csv' to load custom costs from a CSV file, 'amber' to pull dynamic import prices automatically from your Amber Electric Home Assistant forecast sensor, or 'ha_entity' to pull dynamic prices from any Home Assistant sensor whose attribute holds a list of priced intervals.",
       "input": "select",
       "select_options": [
         "hp_hc_periods",
-        "csv"
+        "csv",
+        "amber",
+        "ha_entity"
       ],
       "default_value": "hp_hc_periods",
       "unit": "none"
+    },
+    "dynamic_tariff_import_forecast_entity": {
+      "friendly_name": "Import price sensor",
+      "Description": "Home Assistant forecast sensor whose attribute contains per-interval import prices. For Amber this is your general/import forecast sensor (e.g. sensor.beckton_general_forecast).",
+      "input": "string",
+      "default_value": "",
+      "unit": "none",
+      "requires": {
+        "load_cost_forecast_method": ["amber", "ha_entity"]
+      }
     },
     "load_peak_hour_periods": {
       "friendly_name": "List peak hour periods",
@@ -490,14 +383,26 @@
     },
     "production_price_forecast_method": {
       "friendly_name": "PV power production price forecast method",
-      "Description": "Define the method that will be used for PV power production price forecast. This is the price that is paid by the utility for energy injected into the grid. The options are \u2018constant\u2019 for a constant fixed value or \u2018csv\u2019 to load custom price forecasts from a CSV file.",
+      "Description": "Method used for PV power production price (export price) forecast. This is the price paid by the utility for energy injected into the grid. 'constant' for a fixed value, 'csv' to load custom prices from a CSV file, 'amber' to pull dynamic export prices automatically from your Amber Electric feed-in forecast sensor, or 'ha_entity' to pull dynamic prices from any Home Assistant sensor whose attribute holds a list of priced intervals.",
       "input": "select",
       "select_options": [
         "constant",
-        "csv"
+        "csv",
+        "amber",
+        "ha_entity"
       ],
       "default_value": "constant",
       "unit": "none"
+    },
+    "dynamic_tariff_export_forecast_entity": {
+      "friendly_name": "Export price sensor",
+      "Description": "Home Assistant forecast sensor whose attribute contains per-interval export (feed-in) prices. For Amber this is your feed-in forecast sensor (e.g. sensor.beckton_feed_in_forecast).",
+      "input": "string",
+      "default_value": "",
+      "unit": "none",
+      "requires": {
+        "production_price_forecast_method": ["amber", "ha_entity"]
+      }
     },
     "photovoltaic_production_sell_price": {
       "friendly_name": "Constant PV power production price",
@@ -507,6 +412,94 @@
       "unit": "\u00a4/kWh",
       "requires": {
         "production_price_forecast_method": "constant"
+      }
+    },
+    "dynamic_tariff_forecast_attribute": {
+      "friendly_name": "Forecast attribute name",
+      "Description": "Generic 'ha_entity' only: the sensor attribute holding the list of interval rows. Default: 'forecasts'.",
+      "input": "string",
+      "default_value": "forecasts",
+      "unit": "none",
+      "requires": {
+        "load_cost_forecast_method": "ha_entity"
+      }
+    },
+    "dynamic_tariff_start_key": {
+      "friendly_name": "Interval start key",
+      "Description": "Generic 'ha_entity' only: row field name for the interval start timestamp.",
+      "input": "string",
+      "default_value": "start_time",
+      "unit": "none",
+      "requires": {
+        "load_cost_forecast_method": "ha_entity"
+      }
+    },
+    "dynamic_tariff_end_key": {
+      "friendly_name": "Interval end key",
+      "Description": "Generic 'ha_entity' only: row field name for the interval end timestamp.",
+      "input": "string",
+      "default_value": "end_time",
+      "unit": "none",
+      "requires": {
+        "load_cost_forecast_method": "ha_entity"
+      }
+    },
+    "dynamic_tariff_duration_key": {
+      "friendly_name": "Interval duration key",
+      "Description": "Generic 'ha_entity' only: row field name for the interval duration in minutes.",
+      "input": "string",
+      "default_value": "duration",
+      "unit": "none",
+      "requires": {
+        "load_cost_forecast_method": "ha_entity"
+      }
+    },
+    "dynamic_tariff_import_price_key": {
+      "friendly_name": "Import price key",
+      "Description": "Generic 'ha_entity' only: row field name containing the import price per kWh.",
+      "input": "string",
+      "default_value": "per_kwh",
+      "unit": "\u00a4/kWh",
+      "requires": {
+        "load_cost_forecast_method": "ha_entity"
+      }
+    },
+    "dynamic_tariff_time_boundary_strategy": {
+      "friendly_name": "Interval boundary strategy",
+      "Description": "Generic 'ha_entity' only: 'explicit_start_end' uses start and end keys directly; 'end_minus_duration' computes start as end minus duration.",
+      "input": "select",
+      "select_options": [
+        "explicit_start_end",
+        "end_minus_duration"
+      ],
+      "default_value": "explicit_start_end",
+      "unit": "none",
+      "requires": {
+        "load_cost_forecast_method": "ha_entity"
+      }
+    },
+    "dynamic_tariff_export_price_key": {
+      "friendly_name": "Export price key",
+      "Description": "Generic 'ha_entity' only: row field name containing the export sell price per kWh.",
+      "input": "string",
+      "default_value": "per_kwh",
+      "unit": "\u00a4/kWh",
+      "requires": {
+        "production_price_forecast_method": "ha_entity"
+      }
+    },
+    "dynamic_tariff_export_sign": {
+      "friendly_name": "Export price sign",
+      "Description": "Generic 'ha_entity' only: 'source_signed' uses the provider value as-is; 'invert' multiplies by -1 if your provider returns positive export prices.",
+      "input": "select",
+      "select_options": [
+        "source_signed",
+        "invert"
+      ],
+      "default_value": "source_signed",
+      "unit": "none",
+      "requires": {
+        "production_price_forecast_method": "ha_entity"
       }
     }
   },

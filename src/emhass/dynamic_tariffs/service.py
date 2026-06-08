@@ -14,6 +14,22 @@ def _logger(logger):
     return logger or logging.getLogger(__name__)
 
 
+# Map user-facing forecast method values to dynamic tariff provider source names.
+# Selecting one of these values for load_cost_forecast_method /
+# production_price_forecast_method activates the matching provider. Add a new
+# entry here (plus a provider in PROVIDERS) to expose another tariff source.
+DYNAMIC_TARIFF_METHODS: dict[str, str] = {
+    "amber": "home_assistant_amber_sensors",
+    "ha_entity": "home_assistant_forecast_entities",
+}
+
+
+def _selected_dynamic_source(optim_conf: dict[str, Any]) -> tuple[str | None, str | None]:
+    import_source = DYNAMIC_TARIFF_METHODS.get(optim_conf.get("load_cost_forecast_method"))
+    export_source = DYNAMIC_TARIFF_METHODS.get(optim_conf.get("production_price_forecast_method"))
+    return import_source, export_source
+
+
 def _runtime_tariff_state(params: dict[str, Any]) -> tuple[bool, bool]:
     passed_data = params.setdefault("passed_data", {})
     return (
@@ -33,9 +49,19 @@ async def prepare_dynamic_tariffs(
 ) -> bool:
     """Fetch configured dynamic tariffs and inject them into EMHASS list forecasts."""
     log = _logger(logger)
-    source = optim_conf.get("dynamic_tariff_source", "none") or "none"
-    if source == "none":
+    import_source, export_source = _selected_dynamic_source(optim_conf)
+    if import_source is None and export_source is None:
         return True
+    if import_source != export_source:
+        log.error(
+            "Dynamic tariff pricing requires both load_cost_forecast_method and "
+            "production_price_forecast_method to be set to the same dynamic value "
+            "(e.g. 'amber'); got import=%r export=%r.",
+            optim_conf.get("load_cost_forecast_method"),
+            optim_conf.get("production_price_forecast_method"),
+        )
+        return False
+    source = import_source
 
     has_load, has_prod = _runtime_tariff_state(params)
     if has_load and has_prod:

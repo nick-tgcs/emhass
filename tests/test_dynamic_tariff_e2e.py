@@ -66,13 +66,10 @@ def base_params():
             "set_use_battery": False,
             "weather_forecast_method": "list",
             "load_forecast_method": "list",
-            "dynamic_tariff_source": "home_assistant_amber_sensors",
+            "load_cost_forecast_method": "amber",
+            "production_price_forecast_method": "amber",
             "dynamic_tariff_import_forecast_entity": "sensor.import",
             "dynamic_tariff_export_forecast_entity": "sensor.export",
-            "dynamic_tariff_forecast_attribute": "forecasts",
-            "dynamic_tariff_time_boundary_strategy": "end_minus_duration",
-            "dynamic_tariff_import_price_key": "per_kwh",
-            "dynamic_tariff_export_price_key": "per_kwh",
         }
     )
     params["plant_conf"]["maximum_power_from_grid"] = 9000

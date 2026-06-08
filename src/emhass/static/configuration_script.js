@@ -200,77 +200,6 @@ function loadConfigurationListView(param_definitions, config, list_html) {
     }
   }
 
-  // Dynamic tariff source toggle
-  // When a dynamic provider is selected, hide the static tariff fields and show
-  // the dynamic config fields.  When "none" is selected, do the reverse.
-  const dynamic_tariff_source_div = document.getElementById("dynamic_tariff_source");
-  if (dynamic_tariff_source_div) {
-    const dynamic_tariff_static_params = [
-      "load_cost_forecast_method",
-      "load_peak_hour_periods",
-      "load_peak_hours_cost",
-      "load_offpeak_hours_cost",
-      "production_price_forecast_method",
-      "photovoltaic_production_sell_price"
-    ];
-    const dynamic_tariff_dynamic_params = [
-      "dynamic_tariff_import_forecast_entity",
-      "dynamic_tariff_export_forecast_entity",
-      "dynamic_tariff_forecast_attribute",
-      "dynamic_tariff_start_key",
-      "dynamic_tariff_end_key",
-      "dynamic_tariff_duration_key",
-      "dynamic_tariff_import_price_key",
-      "dynamic_tariff_export_price_key",
-      "dynamic_tariff_time_boundary_strategy",
-      "dynamic_tariff_export_sign",
-      "dynamic_tariff_strict_coverage",
-      "dynamic_tariff_amber_config_entry_id",
-      "dynamic_tariff_import_channel_type",
-      "dynamic_tariff_export_channel_type"
-    ];
-    const dynamic_tariff_select = dynamic_tariff_source_div.querySelector("select, input");
-    if (dynamic_tariff_select) {
-      const toggleDynamicTariffVisibility = () => {
-        const isDynamic = dynamic_tariff_select.value !== "none";
-        const isAmberService = dynamic_tariff_select.value === "home_assistant_amber_service";
-        const isAmber = dynamic_tariff_select.value === "home_assistant_amber_sensors" || isAmberService;
-        const isEntityProvider = dynamic_tariff_select.value === "home_assistant_forecast_entities";
-        dynamic_tariff_static_params.forEach(paramId => {
-          const paramDiv = document.getElementById(paramId);
-          if (paramDiv) paramDiv.style.display = isDynamic ? "none" : "";
-        });
-        dynamic_tariff_dynamic_params.forEach(paramId => {
-          const paramDiv = document.getElementById(paramId);
-          if (!paramDiv) return;
-          // Always hide Amber-only fields when not using Amber
-          if (paramId === "dynamic_tariff_amber_config_entry_id" ||
-              paramId === "dynamic_tariff_import_channel_type" ||
-              paramId === "dynamic_tariff_export_channel_type") {
-            paramDiv.style.display = (isDynamic && isAmber) ? "" : "none";
-            return;
-          }
-          // Hide raw key fields for Amber (they're fixed)
-          if (paramId === "dynamic_tariff_start_key" ||
-              paramId === "dynamic_tariff_end_key" ||
-              paramId === "dynamic_tariff_duration_key" ||
-              paramId === "dynamic_tariff_import_price_key" ||
-              paramId === "dynamic_tariff_export_price_key" ||
-              paramId === "dynamic_tariff_time_boundary_strategy" ||
-              paramId === "dynamic_tariff_export_sign") {
-            paramDiv.style.display = (isDynamic && isEntityProvider) ? "" : "none";
-            return;
-          }
-          // Entity fields: always show when dynamic
-          paramDiv.style.display = isDynamic ? "" : "none";
-        });
-      };
-      dynamic_tariff_select.addEventListener("change", toggleDynamicTariffVisibility);
-      dynamic_tariff_select.addEventListener("input", toggleDynamicTariffVisibility);
-      toggleDynamicTariffVisibility();
-    }
-  }
-
   // ML Forecaster Visibility Logic
   const forecast_method_param = "load_forecast_method";
   const ml_related_params = [
@@ -680,7 +609,15 @@ function checkRequirements(
     requirement_element_value = requirement_element.value;
   }
 
-  if (requirement_element_value != requirement_value) {
+  // requirement_value may be a single value or an array of acceptable values.
+  const accepted_values = Array.isArray(requirement_value)
+    ? requirement_value
+    : [requirement_value];
+  const requirement_met = accepted_values
+    .map(String)
+    .includes(String(requirement_element_value));
+
+  if (!requirement_met) {
     if (!param_element.classList.contains("requirement-disable")) {
       param_element.classList.add("requirement-disable");
     }

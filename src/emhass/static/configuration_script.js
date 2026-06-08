@@ -54,7 +54,7 @@ window.onload = async function () {
 
 //obtain file containing information about parameters (definitions)
 async function getParamDefinitions() {
-  const response = await fetch(`static/data/param_definitions.json`);
+  const response = await fetch(`static/data/param_definitions.json?v=${Date.now()}`);
   if (response.status !== 200 && response.status !== 201) {
     //alert error in alert box
     errorAlert("Unable to obtain definitions file");
@@ -609,7 +609,15 @@ function checkRequirements(
     requirement_element_value = requirement_element.value;
   }
 
-  if (requirement_element_value != requirement_value) {
+  // requirement_value may be a single value or an array of acceptable values.
+  const accepted_values = Array.isArray(requirement_value)
+    ? requirement_value
+    : [requirement_value];
+  const requirement_met = accepted_values
+    .map(String)
+    .includes(String(requirement_element_value));
+
+  if (!requirement_met) {
     if (!param_element.classList.contains("requirement-disable")) {
       param_element.classList.add("requirement-disable");
     }

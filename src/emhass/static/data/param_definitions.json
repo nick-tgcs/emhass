@@ -4,27 +4,31 @@
       "friendly_name": "Cost function",
       "Description": "Define the type of cost function.",
       "input": "select",
-      "select_options": ["profit", "cost", "self-consumption"],
+      "select_options": [
+        "profit",
+        "cost",
+        "self-consumption"
+      ],
       "default_value": "profit",
       "unit": "none"
     },
     "sensor_power_photovoltaics": {
       "friendly_name": "Sensor power photovoltaic",
-      "Description": "This is the name of the photovoltaic power-produced sensor in Watts from Home Assistant. For example: ‘sensor.power_photovoltaics’.",
+      "Description": "This is the name of the photovoltaic power-produced sensor in Watts from Home Assistant. For example: \u2018sensor.power_photovoltaics\u2019.",
       "input": "string",
       "default_value": "sensor.power_photovoltaics",
       "unit": "none"
     },
     "sensor_power_photovoltaics_forecast": {
       "friendly_name": "Sensor power photovoltaic forecast",
-      "Description": "This is the name of the photovoltaic forecast sensor in Watts from Home Assistant. For example: ‘sensor.p_pv_forecast’.",
+      "Description": "This is the name of the photovoltaic forecast sensor in Watts from Home Assistant. For example: \u2018sensor.p_pv_forecast\u2019.",
       "input": "string",
       "default_value": "sensor.p_pv_forecast",
       "unit": "none"
     },
     "sensor_power_load_no_var_loads": {
       "friendly_name": "Sensor power loads with no variable loads",
-      "Description": "The name of the household power consumption sensor in Watts from Home Assistant. The deferrable loads that we will want to include in the optimization problem should be subtracted from this sensor in HASS. For example: ‘sensor.power_load_no_var_loads’",
+      "Description": "The name of the household power consumption sensor in Watts from Home Assistant. The deferrable loads that we will want to include in the optimization problem should be subtracted from this sensor in HASS. For example: \u2018sensor.power_load_no_var_loads\u2019",
       "input": "string",
       "default_value": "sensor.power_load_no_var_loads",
       "unit": "none"
@@ -124,7 +128,12 @@
       "friendly_name": "Logging level",
       "Description": "DEBUG provides detailed diagnostic information, INFO gives general operational messages, WARNING highlights potential issues, and ERROR indicates critical problems that may disrupt functionality.",
       "input": "select",
-      "select_options": ["INFO", "DEBUG", "WARNING", "ERROR"],
+      "select_options": [
+        "INFO",
+        "DEBUG",
+        "WARNING",
+        "ERROR"
+      ],
       "default_value": "INFO",
       "unit": "none"
     }
@@ -162,7 +171,11 @@
       "friendly_name": "Timestamp rounding method",
       "Description": "Set the method for timestamp rounding, options are: first, last and nearest.",
       "input": "select",
-      "select_options": ["nearest", "first", "last"],
+      "select_options": [
+        "nearest",
+        "first",
+        "last"
+      ],
       "default_value": "nearest",
       "unit": "none"
     },
@@ -175,9 +188,14 @@
     },
     "load_forecast_method": {
       "friendly_name": "Load forecast method",
-      "Description": "The load forecast method that will be used. The options are ‘csv’ to load a CSV file or ‘naive’ for a simple 1-day persistence model.",
+      "Description": "The load forecast method that will be used. The options are \u2018csv\u2019 to load a CSV file or \u2018naive\u2019 for a simple 1-day persistence model.",
       "input": "select",
-      "select_options": ["typical", "naive", "mlforecaster", "csv"],
+      "select_options": [
+        "typical",
+        "naive",
+        "mlforecaster",
+        "csv"
+      ],
       "default_value": "typical",
       "unit": "none"
     },
@@ -213,14 +231,19 @@
       "friendly_name": "MIP relative gap tolerance",
       "Description": "For mixed-integer problems (with binary variables), the solver stops when the solution is within this percentage of optimal. Valid range: 0 to 1 (0% to 100%). Higher values (e.g., 0.05 = 5%) solve faster with minimal quality loss. Recommended: 0.05 for ~2x speedup. Defaults to 0 (exact optimal).",
       "input": "float",
-      "default_value": 0.00,
+      "default_value": 0.0,
       "unit": "fraction"
     },
     "weather_forecast_method": {
       "friendly_name": "Weather forecast method",
       "Description": "This will define the weather forecast method that will be used. options are 'open-meteo', 'Solcast', 'solar.forecast' (forecast.solar) and 'csv' to load a CSV file. When loading a CSV file this will be directly considered as the PV power forecast in Watts.",
       "input": "select",
-      "select_options": ["open-meteo", "solcast", "solar.forecast", "csv"],
+      "select_options": [
+        "open-meteo",
+        "solcast",
+        "solar.forecast",
+        "csv"
+      ],
       "default_value": "open-meteo",
       "unit": "none"
     },
@@ -282,10 +305,10 @@
     },
     "inverter_stress_cost": {
       "friendly_name": "Hybrid Inverter Stress Cost",
-      "Description": "A virtual cost (Currency/kWh) applied at the inverter's nominal power to penalise high loads. Currently implemented as a quadratic curve (Cost ∝ Power²), incentivising 'low and slow' operation to reduce thermal stress and smooth power flows.",
+      "Description": "A virtual cost (Currency/kWh) applied at the inverter's nominal power to penalise high loads. Currently implemented as a quadratic curve (Cost \u221d Power\u00b2), incentivising 'low and slow' operation to reduce thermal stress and smooth power flows.",
       "input": "float",
       "default_value": 0.0,
-      "unit": "¤/kWh"
+      "unit": "\u00a4/kWh"
     },
     "inverter_stress_segments": {
       "friendly_name": "Hybrid Inverter Stress Segments",
@@ -305,18 +328,40 @@
   "Tariff": {
     "load_cost_forecast_method": {
       "friendly_name": "Load cost method",
-      "Description": "Define the method that will be used for load cost forecast. The options are ‘hp_hc_periods’ for peak and non-peak hours contracts, and ‘csv’ to load custom cost from CSV file.",
+      "Description": "Method used for load cost (import price) forecast. 'hp_hc_periods' for fixed peak/off-peak contracts, 'csv' to load custom costs from a CSV file, 'amber' to pull dynamic import prices automatically from your Amber Electric Home Assistant forecast sensor, or 'ha_entity' to pull dynamic prices from any Home Assistant sensor whose attribute holds a list of priced intervals.",
       "input": "select",
-      "select_options": ["hp_hc_periods", "csv"],
+      "select_options": [
+        "hp_hc_periods",
+        "csv",
+        "amber",
+        "ha_entity"
+      ],
       "default_value": "hp_hc_periods",
       "unit": "none"
+    },
+    "dynamic_tariff_import_forecast_entity": {
+      "friendly_name": "Import price sensor",
+      "Description": "Home Assistant forecast sensor whose attribute contains per-interval import prices. For Amber this is your general/import forecast sensor (e.g. sensor.beckton_general_forecast).",
+      "input": "string",
+      "default_value": "",
+      "unit": "none",
+      "requires": {
+        "load_cost_forecast_method": ["amber", "ha_entity"]
+      }
     },
     "load_peak_hour_periods": {
       "friendly_name": "List peak hour periods",
       "Description": "A list of peak hour periods for load consumption from the grid. This is useful if you have a contract with peak and non-peak hours.",
       "input": "array.time",
       "default_value": {
-        "period_hp_template": [{ "start": "02:54" }, { "end": "15:24" }]
+        "period_hp_template": [
+          {
+            "start": "02:54"
+          },
+          {
+            "end": "15:24"
+          }
+        ]
       },
       "unit": "none",
       "requires": {
@@ -331,7 +376,7 @@
         "load_cost_forecast_method": "hp_hc_periods"
       },
       "default_value": 0.1907,
-      "unit": "¤/kWh"
+      "unit": "\u00a4/kWh"
     },
     "load_offpeak_hours_cost": {
       "friendly_name": "Off-peak hours electrical energy cost",
@@ -341,24 +386,127 @@
         "load_cost_forecast_method": "hp_hc_periods"
       },
       "default_value": 0.1419,
-      "unit": "¤/kWh"
+      "unit": "\u00a4/kWh"
     },
     "production_price_forecast_method": {
       "friendly_name": "PV power production price forecast method",
-      "Description": "Define the method that will be used for PV power production price forecast. This is the price that is paid by the utility for energy injected into the grid. The options are ‘constant’ for a constant fixed value or ‘csv’ to load custom price forecasts from a CSV file.",
+      "Description": "Method used for PV power production price (export price) forecast. This is the price paid by the utility for energy injected into the grid. 'constant' for a fixed value, 'csv' to load custom prices from a CSV file, 'amber' to pull dynamic export prices automatically from your Amber Electric feed-in forecast sensor, or 'ha_entity' to pull dynamic prices from any Home Assistant sensor whose attribute holds a list of priced intervals.",
       "input": "select",
-      "select_options": ["constant", "csv"],
+      "select_options": [
+        "constant",
+        "csv",
+        "amber",
+        "ha_entity"
+      ],
       "default_value": "constant",
       "unit": "none"
+    },
+    "dynamic_tariff_export_forecast_entity": {
+      "friendly_name": "Export price sensor",
+      "Description": "Home Assistant forecast sensor whose attribute contains per-interval export (feed-in) prices. For Amber this is your feed-in forecast sensor (e.g. sensor.beckton_feed_in_forecast).",
+      "input": "string",
+      "default_value": "",
+      "unit": "none",
+      "requires": {
+        "production_price_forecast_method": ["amber", "ha_entity"]
+      }
     },
     "photovoltaic_production_sell_price": {
       "friendly_name": "Constant PV power production price",
       "Description": "The paid price for energy injected to the grid from excess PV production in currency/kWh.",
       "input": "float",
       "default_value": 0.1419,
-      "unit": "¤/kWh",
+      "unit": "\u00a4/kWh",
       "requires": {
         "production_price_forecast_method": "constant"
+      }
+    },
+    "dynamic_tariff_forecast_attribute": {
+      "friendly_name": "Forecast attribute name",
+      "Description": "Generic 'ha_entity' only: the sensor attribute holding the list of interval rows. Default: 'forecasts'.",
+      "input": "string",
+      "default_value": "forecasts",
+      "unit": "none",
+      "requires": {
+        "load_cost_forecast_method": "ha_entity"
+      }
+    },
+    "dynamic_tariff_start_key": {
+      "friendly_name": "Interval start key",
+      "Description": "Generic 'ha_entity' only: row field name for the interval start timestamp.",
+      "input": "string",
+      "default_value": "start_time",
+      "unit": "none",
+      "requires": {
+        "load_cost_forecast_method": "ha_entity"
+      }
+    },
+    "dynamic_tariff_end_key": {
+      "friendly_name": "Interval end key",
+      "Description": "Generic 'ha_entity' only: row field name for the interval end timestamp.",
+      "input": "string",
+      "default_value": "end_time",
+      "unit": "none",
+      "requires": {
+        "load_cost_forecast_method": "ha_entity"
+      }
+    },
+    "dynamic_tariff_duration_key": {
+      "friendly_name": "Interval duration key",
+      "Description": "Generic 'ha_entity' only: row field name for the interval duration in minutes.",
+      "input": "string",
+      "default_value": "duration",
+      "unit": "none",
+      "requires": {
+        "load_cost_forecast_method": "ha_entity"
+      }
+    },
+    "dynamic_tariff_import_price_key": {
+      "friendly_name": "Import price key",
+      "Description": "Generic 'ha_entity' only: row field name containing the import price per kWh.",
+      "input": "string",
+      "default_value": "per_kwh",
+      "unit": "\u00a4/kWh",
+      "requires": {
+        "load_cost_forecast_method": "ha_entity"
+      }
+    },
+    "dynamic_tariff_time_boundary_strategy": {
+      "friendly_name": "Interval boundary strategy",
+      "Description": "Generic 'ha_entity' only: 'explicit_start_end' uses start and end keys directly; 'end_minus_duration' computes start as end minus duration.",
+      "input": "select",
+      "select_options": [
+        "explicit_start_end",
+        "end_minus_duration"
+      ],
+      "default_value": "explicit_start_end",
+      "unit": "none",
+      "requires": {
+        "load_cost_forecast_method": "ha_entity"
+      }
+    },
+    "dynamic_tariff_export_price_key": {
+      "friendly_name": "Export price key",
+      "Description": "Generic 'ha_entity' only: row field name containing the export sell price per kWh.",
+      "input": "string",
+      "default_value": "per_kwh",
+      "unit": "\u00a4/kWh",
+      "requires": {
+        "production_price_forecast_method": "ha_entity"
+      }
+    },
+    "dynamic_tariff_export_sign": {
+      "friendly_name": "Export price sign",
+      "Description": "Generic 'ha_entity' only: 'source_signed' uses the provider value as-is; 'invert' multiplies by -1 if your provider returns positive export prices.",
+      "input": "select",
+      "select_options": [
+        "source_signed",
+        "invert"
+      ],
+      "default_value": "source_signed",
+      "unit": "none",
+      "requires": {
+        "production_price_forecast_method": "ha_entity"
       }
     }
   },
@@ -403,7 +551,7 @@
       "Description": "This is the solar elevation threshold parameter used to identify the early morning or late evening periods. Defaults to 10.",
       "input": "int",
       "default_value": 10,
-      "unit": "°"
+      "unit": "\u00b0"
     },
     "adjusted_pv_model_max_age": {
       "friendly_name": "Adjusted PV model maximum age",
@@ -433,14 +581,14 @@
       "Description": "The tilt angle of your solar panels. Defaults to 30. This parameter can be a list of items to enable the simulation of mixed orientation systems.",
       "input": "array.int",
       "default_value": 30,
-      "unit": "°"
+      "unit": "\u00b0"
     },
     "surface_azimuth": {
       "friendly_name": "The PV azimuth (direction)",
       "Description": "The azimuth of your PV installation. Defaults to 205. This parameter can be a list of items to enable the simulation of mixed orientation systems.",
       "input": "array.int",
       "default_value": 205,
-      "unit": "°"
+      "unit": "\u00b0"
     },
     "modules_per_string": {
       "friendly_name": "Number of modules per string",
@@ -530,7 +678,7 @@
       "Description": "Maximum acceptable cost for scheduling each deferrable load. If the cost to schedule the load (including startup penalty) exceeds this threshold, the load will not be scheduled. Set to 0 to disable and make load scheduling mandatory.",
       "input": "array.float",
       "default_value": 0.0,
-      "unit": "¤"
+      "unit": "\u00a4"
     },
     "set_deferrable_max_startups": {
       "friendly_name": "Maximum startups for deferrable loads",
@@ -541,7 +689,7 @@
     },
     "start_timesteps_of_each_deferrable_load": {
       "friendly_name": "Deferrable start timestamp",
-      "Description": "The timestep as from which each deferrable load is allowed to operate (if you don’t want the deferrable load to use the whole optimization time window). If you specify a value of 0 (or negative), the deferrable load will be optimized as from the beginning of the complete prediction horizon window.",
+      "Description": "The timestep as from which each deferrable load is allowed to operate (if you don\u2019t want the deferrable load to use the whole optimization time window). If you specify a value of 0 (or negative), the deferrable load will be optimized as from the beginning of the complete prediction horizon window.",
       "input": "array.int",
       "default_value": 0,
       "unit": "timesteps"
@@ -578,7 +726,7 @@
     },
     "set_battery_dynamic": {
       "friendly_name": "Set Battery dynamic (dis)charge power limiting",
-      "Description": "Set a power dynamic limiting condition to the battery power. This is an additional constraint on the battery dynamic in power per unit of time (timestep), which allows you to set a percentage of the battery’s nominal full power as the maximum power allowed for (dis)charge.",
+      "Description": "Set a power dynamic limiting condition to the battery power. This is an additional constraint on the battery dynamic in power per unit of time (timestep), which allows you to set a percentage of the battery\u2019s nominal full power as the maximum power allowed for (dis)charge.",
       "input": "boolean",
       "default_value": false,
       "unit": "none"
@@ -608,14 +756,14 @@
       "Description": "An additional weight (currency/ kWh) applied in the cost function to battery usage for discharging",
       "input": "float",
       "default_value": 0.0,
-      "unit": "¤/kWh"
+      "unit": "\u00a4/kWh"
     },
     "weight_battery_charge": {
       "friendly_name": "Add cost weight for battery charge",
       "Description": "An additional weight (currency/ kWh) applied in the cost function to battery usage for charging",
       "input": "float",
       "default_value": 0.0,
-      "unit": "¤/kWh"
+      "unit": "\u00a4/kWh"
     },
     "battery_discharge_power_max": {
       "friendly_name": "Max battery discharge power",
@@ -675,10 +823,10 @@
     },
     "battery_stress_cost": {
       "friendly_name": "Battery Stress Cost",
-      "Description": "A virtual cost (Currency/kWh) applied at the battery's nominal power to penalise high loads. Currently implemented as a quadratic curve (Cost ∝ Power²), incentivising 'low and slow' operation to reduce thermal stress and smooth power flows.",
+      "Description": "A virtual cost (Currency/kWh) applied at the battery's nominal power to penalise high loads. Currently implemented as a quadratic curve (Cost \u221d Power\u00b2), incentivising 'low and slow' operation to reduce thermal stress and smooth power flows.",
       "input": "float",
       "default_value": 0.0,
-      "unit": "¤/kWh"
+      "unit": "\u00a4/kWh"
     },
     "battery_stress_segments": {
       "friendly_name": "Battery Stress Segments",
@@ -688,13 +836,13 @@
       "unit": "count"
     },
     "battery_soc_deficit_threshold": {
-    "friendly_name": "Battery SOC deficit threshold",
-    "Description": "The SOC threshold below which deficit penalties apply. For example, 0.20 for 20% SOC. Penalties are applied for every hour and every kWh the SOC is below this value.",
-    "input": "float",
-    "default_value": 0.4,
-    "requires": {
-      "set_use_battery": true
-    }
+      "friendly_name": "Battery SOC deficit threshold",
+      "Description": "The SOC threshold below which deficit penalties apply. For example, 0.20 for 20% SOC. Penalties are applied for every hour and every kWh the SOC is below this value.",
+      "input": "float",
+      "default_value": 0.4,
+      "requires": {
+        "set_use_battery": true
+      }
     },
     "battery_soc_deficit_cost": {
       "friendly_name": "Battery SOC deficit cost",
@@ -703,7 +851,7 @@
       "default_value": 0.0,
       "requires": {
         "set_use_battery": true
-    }
+      }
     },
     "ignore_pv_feedback_during_curtailment": {
       "friendly_name": "Ignore PV feedback during curtailment",
